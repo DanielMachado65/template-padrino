@@ -9,7 +9,7 @@ services:
       - mongo
     volumes:
       - .:/app
-    command: bundle exec rackup -p 4567 -o 0.0.
+    command: bundle exec rackup -p 4567 -o 0.0.0.0
   mongo:
     image: mongo:6
     restart: unless-stopped
