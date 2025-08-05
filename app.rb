@@ -1,6 +1,7 @@
 require 'sinatra'
 require 'mongo'
 require 'json'
+require 'pry'
 
 # Establish MongoDB connection
 MONGO_URL = ENV.fetch('MONGO_URL', 'mongodb://localhost:27017/mydb')
@@ -19,6 +20,7 @@ class App < Sinatra::Base
   post '/items' do
     content_type :json
     data = JSON.parse(request.body.read)
+    binding.pry
     result = DB[:items].insert_one(data)
     status 201
     { id: result.inserted_id.to_s }.to_json

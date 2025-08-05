@@ -1,6 +1,13 @@
 source 'https://rubygems.org'
 
-gem 'sinatra'
 gem 'mongo'
+gem 'puma'
 gem 'rackup'
-gem "puma", "~> 6.6"
+gem 'sinatra'
+
+group :development do
+  gem 'listen'
+  gem 'pry'
+  gem 'rerun'
+  gem 'rubocop'
+end
