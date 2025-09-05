@@ -1,9 +1,8 @@
 # quake_parser.rb
 require 'json'
-require 'set'
 
 class QuakeLogParser
-  WORLD = "<world>"
+  WORLD = '<world>'
 
   def initialize(file_path)
     @file_path = file_path
@@ -38,8 +37,8 @@ class QuakeLogParser
   end
 
   def start_game!
-    @in_game = true
     reset_current_game!
+    @in_game = true
   end
 
   def end_game!
@@ -60,54 +59,57 @@ class QuakeLogParser
   end
 
   def handle_game_boundaries(line)
-    if line.include?("InitGame:")
+    if line.include?('InitGame:')
       # se já estava dentro de uma partida, fecha a anterior
       flush_game! if @in_game
       start_game!
-    elsif line.start_with?("  ") && (line.include?("ShutdownGame") || line.include?("Exit:"))
+    elsif line.start_with?('  ') && (line.include?('ShutdownGame') || line.include?('Exit:'))
       end_game! if @in_game
     end
   end
 
   # Captura/atualiza players a partir de ClientUserinfoChanged
   def capture_player(line)
-    return unless line.include?("ClientUserinfoChanged:")
+    return unless line.include?('ClientUserinfoChanged:')
 
     # padrão: ... n\PlayerName\ ...
-    if line =~ /n\\([^\\]+)\\/
-      name = $1.strip
-      return if name.empty? || name == WORLD
-      @players << name
-      @kills[name] ||= 0
-    end
+    return unless line =~ /n\\([^\\]+)\\/
+
+    name = ::Regexp.last_match(1).strip
+    return if name.empty? || name == WORLD
+
+    @players << name
+    @kills[name] ||= 0
   end
 
   # Captura kills e causas (Kill:)
   def capture_kill(line)
-    return unless line.include?("Kill:")
+    return unless line.include?('Kill:')
 
     # padrão: Kill: a b c: Killer killed Victim by MOD_SOMETHING
-    if line =~ /Kill:\s+\d+\s+\d+\s+\d+:\s+(.+)\s+killed\s+(.+)\s+by\s+(MOD_[A-Z_]+)/
-      killer, victim, cause = $1.strip, $2.strip, $3.strip
+    return unless line =~ /Kill:\s+\d+\s+\d+\s+\d+:\s+(.+)\s+killed\s+(.+)\s+by\s+(MOD_[A-Z_]+)/
 
-      @total_kills += 1
-      @kills_by_means[cause] += 1
+    killer = ::Regexp.last_match(1).strip
+    victim = ::Regexp.last_match(2).strip
+    cause = ::Regexp.last_match(3).strip
 
-      # garante que vítimas e killers que aparecem sem ClientUserinfoChanged
-      # ainda entrem em players (exceto <world>)
-      if killer != WORLD
-        @players << killer
-        @kills[killer] ||= 0
-        @kills[killer] += 1
-        @global_kills[killer] += 1
-      else
-        # world kill: vítima perde 1
-        unless victim == WORLD
-          @players << victim
-          @kills[victim] ||= 0
-          @kills[victim] -= 1
-          @global_kills[victim] -= 1
-        end
+    @total_kills += 1
+    @kills_by_means[cause] += 1
+
+    # garante que vítimas e killers que aparecem sem ClientUserinfoChanged
+    # ainda entrem em players (exceto <world>)
+    if killer != WORLD
+      @players << killer
+      @kills[killer] ||= 0
+      @kills[killer] += 1
+      @global_kills[killer] += 1
+    else
+      # world kill: vítima perde 1
+      unless victim == WORLD
+        @players << victim
+        @kills[victim] ||= 0
+        @kills[victim] -= 1
+        @global_kills[victim] -= 1
       end
     end
   end
@@ -119,13 +121,13 @@ class QuakeLogParser
     end
 
     ranking = @global_kills
-      .sort_by { |_, k| -k }
-      .map { |player, kills| { player: player, kills: kills } }
+              .sort_by { |_, k| -k }
+              .map { |player, kills| { player: player, kills: kills } }
 
     puts JSON.pretty_generate({
-      games: games_hash,
-      ranking: ranking
-    })
+                                games: games_hash,
+                                ranking: ranking
+                              })
   end
 end
 
